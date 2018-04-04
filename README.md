@@ -1,0 +1,1 @@
+# Coils-Spherical-Ferromagnetic-Mass-Simulation
