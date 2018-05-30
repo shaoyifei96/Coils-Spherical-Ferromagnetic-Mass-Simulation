@@ -49,10 +49,25 @@ classdef Field3D
         
         function  [t, state]= simulate_mass(obj,mass_num,t_total,t_precision,movie)
             t=0:t_precision:t_total;
-            figure();
-            mag2dbcoloredquiver(obj.B_total,obj.Coils,obj,'B total');
-            figure();
-            mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'F total');
+            figure(1);
+            mag2dbcoloredquiver(obj.B_total,obj.Coils,obj,'B total (Color Scale in dB)');
+            for i=1 : length(obj.Coils)
+                loc=obj.Coils(i).Location;
+                text(loc(1),loc(2),loc(3),['N*I = ' num2str(obj.Coils(i).N*obj.Coils(i).I)],'Color','Magenta')
+            end
+            xlabel('x coordinate (m)');
+            ylabel('y coordinate (m)');
+            zlabel('z coordinate (m)');
+            
+            figure(2);
+            mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'F total (Color Scale in dB)');
+            for i=1 : length(obj.Coils)
+                loc=obj.Coils(i).Location;
+                text(loc(1),loc(2),loc(3),['N*I = ' num2str(obj.Coils(i).N*obj.Coils(i).I)],'Color','Magenta');
+            end
+            xlabel('x coordinate (m)');
+            ylabel('y coordinate (m)');
+            zlabel('z coordinate (m)');
             xlim([-obj.size_map/2-1 obj.size_map/2+1])
             ylim([-obj.size_map/2-1 obj.size_map/2+1])
             zlim([-obj.size_map/2-1 obj.size_map/2+1])
@@ -63,16 +78,29 @@ classdef Field3D
             [t, state]=ode45(@(t,state)sys(obj,t,state,mass.m,const,drag_coeff),t,initi_state,odeset('RelTol',100,'AbsTol',100));
             
             if movie
-                f=figure();
-                mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'F total');
-                xlim([-obj.size_map/2-1 obj.size_map/2+1])
-                ylim([-obj.size_map/2-1 obj.size_map/2+1])
-                zlim([-obj.size_map/2-1 obj.size_map/2+1])
+                f=figure(3);
+                mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'Motion of Particle (Quiver:F total (Color Scale in dB))');
+                xlim([-obj.size_map/2-1 obj.size_map/2+1]);
+                ylim([-obj.size_map/2-1 obj.size_map/2+1]);
+                zlim([-obj.size_map/2-1 obj.size_map/2+1]);
+                xlabel('x coordinate (m)');
+                ylabel('y coordinate (m)');
+                zlabel('z coordinate (m)');
+                for i=1 : length(obj.Coils)
+                    loc=obj.Coils(i).Location;
+                    text(loc(1),loc(2),loc(3),['N*I = ' num2str(obj.Coils(i).N*obj.Coils(i).I)],'Color','Magenta');
+                end
+                loc = obj.masses.Location;
+                vel = obj.masses.Velocity;
+                text(loc(1),loc(2),loc(3),['Loc = ' num2str(loc) newline 'Vel = ' num2str(vel) newline 'Mass = ' num2str(obj.masses.m) ],'Color','Magenta');
+                vel_text = text (loc(1),loc(2),loc(3),'-');
                 hold on;
                 coeff=floor(length(t)/240);
                 h = animatedline('LineWidth',3,'Color','r');
                 for j = 1:240
                     addpoints(h,state(j*coeff,1),state(j*coeff,2),state(j*coeff,3));
+                    vel_text.String = ['v_x = ' num2str(state(j*coeff,4)) newline 'v_y = ' num2str(state(j*coeff,5)) newline 'v_z = ' num2str(state(j*coeff,6))];
+                    vel_text.Position =[state(j*coeff,1) state(j*coeff,2) state(j*coeff,3)];
                     drawnow
                     Frames(j) = getframe(f);
                     percent=j/240*100
@@ -95,7 +123,7 @@ classdef Field3D
         
         
         function state_dot=sys(obj,t,state,m,const,drag_coeff)
-            
+            %This drag doesnt do so well, find another way to use drag
             F=obj.Coils.Calc_F_single(obj,reshape(state(1:3),[1 3]),0.01);
             F=const*F;%based on different units may be different, use SI here
             %state=[x  y  z x_dot y_dot z_dot]

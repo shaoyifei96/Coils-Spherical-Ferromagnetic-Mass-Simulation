@@ -10,7 +10,7 @@ mu=1.2566370614e-6;% enviroment permeability
 map_size= 8;%quiverdb plot has to have odd sized map size, 
 %if a even number is entered, it automatically add 1 to it
 %if even, also print the actual size in the command line
-step_size= 1;
+step_size= 1;%map resolution
 
 Location1=[-5 0 0];
 Direction1=[1 0 0];
