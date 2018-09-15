@@ -13,9 +13,11 @@ classdef Field3D
         
         B_total
         F_total
+        
+        twod
     end
     methods
-        function obj = Field3D(size_map,step_size,mu,Coils,masses)
+        function obj = Field3D(size_map,step_size,mu,Coils,masses,twod)
             if ~mod(size_map,2)%even do
                 size_map=size_map+1
             end
@@ -28,6 +30,8 @@ classdef Field3D
             obj.mu = mu;
             obj.Coils = Coils;
             obj.masses= masses;
+            obj.twod = twod;
+            
         end
         
         function obj = combineB(obj)
@@ -50,7 +54,7 @@ classdef Field3D
         function  [t, state]= simulate_mass(obj,t_total,t_precision,movie)
             t=0:t_precision:t_total;
             figure(1);
-            mag2dbcoloredquiver(obj.B_total,obj.Coils,obj,'B total (Color Scale in dB)');
+            mag2dbcoloredquiver(obj.B_total,obj.Coils,obj,'B total (Color Scale in dB)',obj.twod);
             for i=1 : length(obj.Coils)
                 loc=obj.Coils(i).Location;
                 text(loc(1),loc(2),loc(3),['N*I = ' num2str(obj.Coils(i).N*obj.Coils(i).I)],'Color','Magenta')
@@ -60,7 +64,7 @@ classdef Field3D
             zlabel('z coordinate (m)');
             
             figure(2);
-            mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'F total (Color Scale in dB)');
+            mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'F total (Color Scale in dB)',obj.twod);
             for i=1 : length(obj.Coils)
                 loc=obj.Coils(i).Location;
                 text(loc(1),loc(2),loc(3),['N*I = ' num2str(obj.Coils(i).N*obj.Coils(i).I)],'Color','Magenta');
@@ -84,7 +88,7 @@ classdef Field3D
             
             if movie
                 f=figure(3);
-                mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'Motion of Particle (Quiver:F total (Color Scale in dB))');
+                mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'Motion of Particle (Quiver:F total (Color Scale in dB))',obj.twod);
                 xlim([-obj.size_map/2-1 obj.size_map/2+1]);
                 ylim([-obj.size_map/2-1 obj.size_map/2+1]);
                 zlim([-obj.size_map/2-1 obj.size_map/2+1]);

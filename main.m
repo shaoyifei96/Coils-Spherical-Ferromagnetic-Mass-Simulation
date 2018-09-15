@@ -8,6 +8,8 @@ R=0.1;% Radius
 
 mu=1.2566370614e-6;% enviroment permeability
 map_size= 8;%quiverdb plot has to have odd sized map size, 
+twod = 1;
+%if want 2d, toggle twod to 1
 %if a even number is entered, it automatically add 1 to it
 %if even, also print the actual size in the command line
 step_size= 1;%map resolution
@@ -37,7 +39,7 @@ mu2=1000*mu;
 
 R_seph=0.01;
 m=0.001;%kg
-Location4=[0 -3 -3];
+Location4=[-2 -3 0];
 Velocity4=[0 0 0];
 
 %ferro_linear_mass(Radius,Permeability,mass,Location vector3, Direction Vector3);
@@ -45,14 +47,14 @@ mass1=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4);
 
 R_seph=0.01;
 m=0.002;%kg
-Location4=[0 0 3];
+Location4=[1 2 0];
 Velocity4=[0 0 0];
 
 mass2=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4);
  
 %Create 3D field with certain size and [array of Coils] and ONE mass
-%Field3D(map_size,step_size,permeability,[array of Coils],mass object);
-Field1 = Field3D(map_size,step_size,mu,Coils,[mass1 mass2]);
+%Field3D(map_size,step_size,permeability,[array of Coils],mass object,2d_switch);
+Field1 = Field3D(map_size,step_size,mu,Coils,[mass1 mass2],twod);
 
 Field1=Field1.combineB();%this is important
 %this step calculate the linearly superimporsed B field

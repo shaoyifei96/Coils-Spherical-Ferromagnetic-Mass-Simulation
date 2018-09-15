@@ -1,15 +1,33 @@
-function mag2dbcoloredquiver(B_total,Coils,field,tile)
+function mag2dbcoloredquiver(B_total,Coils,field,tile,twod)
 ax=axes;
 n=field.n;
 Bmag   =zeros(n,n,n);
 B_unit =zeros(n,n,n,3);
-for i =1:n
-    for j =1:n
-        for k =1:n
-            Bmag(i,j,k) = sqrt(sum(B_total(i,j,k,:).^2));
-            B_unit(i,j,k,:)=B_total(i,j,k,:)./Bmag(i,j,k);
-            %B_unit_Radial(i,j,k,:)=reshape(Radial_unit(i,j,k,:),[1 3])/sqrt(sum(reshape(Radial_unit(i,j,k,:),[1 3]).^2));
-            %B_unit_Normal(i,j,k,:)=obj.Direction;
+if twod
+    for i =1:n
+        for j =1:n
+            for k =1:n
+                if (k == n/2)
+                Bmag(i,j,k) = sqrt(sum(B_total(i,j,k,:).^2));
+                B_unit(i,j,k,:)=B_total(i,j,k,:)./Bmag(i,j,k);
+                else
+                Bmag(i,j,k) = 0;
+                B_unit(i,j,k,:)=[0 0 0];
+                end
+                %B_unit_Radial(i,j,k,:)=reshape(Radial_unit(i,j,k,:),[1 3])/sqrt(sum(reshape(Radial_unit(i,j,k,:),[1 3]).^2));
+                %B_unit_Normal(i,j,k,:)=obj.Direction;
+            end
+        end
+    end
+else
+    for i =1:n
+        for j =1:n
+            for k =1:n
+                Bmag(i,j,k) = sqrt(sum(B_total(i,j,k,:).^2));
+                B_unit(i,j,k,:)=B_total(i,j,k,:)./Bmag(i,j,k);
+                %B_unit_Radial(i,j,k,:)=reshape(Radial_unit(i,j,k,:),[1 3])/sqrt(sum(reshape(Radial_unit(i,j,k,:),[1 3]).^2));
+                %B_unit_Normal(i,j,k,:)=obj.Direction;
+            end
         end
     end
 end
@@ -20,7 +38,7 @@ q=quiver3(field.X,field.Y,field.Z,B_unit(:,:,:,1),B_unit(:,:,:,2),B_unit(:,:,:,3
 %// Compute the magnitude of the vectors
 %mags = sqrt(sum(cat(2, q.UData(:), q.VData(:), ...
 %    reshape(q.WData, numel(q.UData), [])).^2, 2));
-Bmag(isnan(Bmag))=0;
+Bmag(isnan(Bmag))=1e-10;
 Bmag=(mag2db(Bmag));
 mags = reshape(Bmag,[n.^3 1]);
 %// Get the current colormap
