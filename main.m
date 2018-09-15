@@ -34,6 +34,7 @@ Coils(3)=Coil3;
 
 
 mu2=1000*mu;
+
 R_seph=0.01;
 m=0.001;%kg
 Location4=[0 -3 -3];
@@ -41,18 +42,25 @@ Velocity4=[0 0 0];
 
 %ferro_linear_mass(Radius,Permeability,mass,Location vector3, Direction Vector3);
 mass1=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4);
+
+R_seph=0.01;
+m=0.002;%kg
+Location4=[0 0 3];
+Velocity4=[0 0 0];
+
+mass2=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4);
  
 %Create 3D field with certain size and [array of Coils] and ONE mass
 %Field3D(map_size,step_size,permeability,[array of Coils],mass object);
-Field1 = Field3D(map_size,step_size,mu,Coils,mass1);
+Field1 = Field3D(map_size,step_size,mu,Coils,[mass1 mass2]);
 
 Field1=Field1.combineB();%this is important
 %this step calculate the linearly superimporsed B field
 %if don't do this, there is no B field anywhere, you would encounter
 %an error on mag2dbcoloredquiver of index exceeds dimension.
 
-%Field1.simulate_mass(mass_numer,total time length(s),each time step length(s),movie?);
-[t, state]= Field1.simulate_mass(1,58,0.1,1);%when closing a animation when not done, output a error with invalid/deleted obj.
+%Field1.simulate_mass(total time length(s),each time step length(s),movie?);
+[t, state]= Field1.simulate_mass(58,0.1,1);%when closing a animation when not done, output a error with invalid/deleted obj.
 %when using simulation, if animation does not work corrently, try changing
 %the time step(try both increase and decrease time step)
 % % % % hold on;

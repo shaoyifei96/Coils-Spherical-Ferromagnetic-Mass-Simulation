@@ -47,7 +47,7 @@ classdef Field3D
             
         end
         
-        function  [t, state]= simulate_mass(obj,mass_num,t_total,t_precision,movie)
+        function  [t, state]= simulate_mass(obj,t_total,t_precision,movie)
             t=0:t_precision:t_total;
             figure(1);
             mag2dbcoloredquiver(obj.B_total,obj.Coils,obj,'B total (Color Scale in dB)');
@@ -71,11 +71,16 @@ classdef Field3D
             xlim([-obj.size_map/2-1 obj.size_map/2+1])
             ylim([-obj.size_map/2-1 obj.size_map/2+1])
             zlim([-obj.size_map/2-1 obj.size_map/2+1])
-            mass=obj.masses(mass_num);
-            initi_state=[mass.Location mass.Velocity];
-            const=2*pi*mass.R^3;%this has problem, missing K, see Jones
-            drag_coeff = 4/3*pi*obj.masses(mass_num).R^3*50;%missing Mr %10kg /s/A/m since submerged in fluid may be higher
-            [t, state]=ode45(@(t,state)sys(obj,t,state,mass.m,const,drag_coeff),t,initi_state,odeset('RelTol',100,'AbsTol',100));
+            state = zeros(length(obj.masses),length(t),6);
+            for mass_num = 1:length(obj.masses) 
+                mass=obj.masses(mass_num);
+                initi_state=[mass.Location mass.Velocity];
+                const=2*pi*mass.R^3;%this has problem, missing K, see Jones
+                drag_coeff = 4/3*pi*obj.masses(mass_num).R^3*50;%missing Mr %10kg /s/A/m since submerged in fluid may be higher
+                [t_output, state(mass_num,:,:)]=ode45(@(t,state)sys(obj,t,state,mass.m,const,drag_coeff),t,initi_state,odeset('RelTol',100,'AbsTol',100));
+                
+            end
+            
             
             if movie
                 f=figure(3);
@@ -90,21 +95,26 @@ classdef Field3D
                     loc=obj.Coils(i).Location;
                     text(loc(1),loc(2),loc(3),['N*I = ' num2str(obj.Coils(i).N*obj.Coils(i).I)],'Color','Magenta');
                 end
-                loc = obj.masses.Location;
-                vel = obj.masses.Velocity;
-                text(loc(1),loc(2),loc(3),['Loc = ' num2str(loc) newline 'Vel = ' num2str(vel) newline 'Mass = ' num2str(obj.masses.m) ],'Color','Magenta');
-                vel_text = text (loc(1),loc(2),loc(3),'-');
-                hold on;
-                coeff=floor(length(t)/240);
-                h = animatedline('LineWidth',3,'Color','r');
+                
+                for mass_num = 1:length(obj.masses) 
+                    loc = obj.masses(mass_num).Location;
+                    vel = obj.masses(mass_num).Velocity;
+                    text(loc(1),loc(2),loc(3),['Loc = ' num2str(loc) newline 'Vel = ' num2str(vel) newline 'Mass = ' num2str(obj.masses(mass_num).m) ],'Color','Magenta');
+                    vel_text(mass_num) = text (loc(1),loc(2),loc(3),'-');
+                    hold on;
+                    coeff=floor(length(t_output)/240);
+                    h(mass_num) = animatedline('LineWidth',3,'Color','r');
+                end
+                
                 for j = 1:240
-                    addpoints(h,state(j*coeff,1),state(j*coeff,2),state(j*coeff,3));
-                    vel_text.String = ['v_x = ' num2str(state(j*coeff,4)) newline 'v_y = ' num2str(state(j*coeff,5)) newline 'v_z = ' num2str(state(j*coeff,6))];
-                    vel_text.Position =[state(j*coeff,1) state(j*coeff,2) state(j*coeff,3)];
+                    for mass_num = 1:length(obj.masses) 
+                        addpoints(h(mass_num),state(mass_num,j*coeff,1),state(mass_num,j*coeff,2),state(mass_num,j*coeff,3));
+                        vel_text(mass_num).String = ['v_x = ' num2str(state(mass_num,j*coeff,4)) newline 'v_y = ' num2str(state(mass_num,j*coeff,5)) newline 'v_z = ' num2str(state(mass_num,j*coeff,6))];
+                        vel_text(mass_num).Position =[state(mass_num,j*coeff,1) state(mass_num,j*coeff,2) state(mass_num,j*coeff,3)]; 
+                    end
                     drawnow
                     Frames(j) = getframe(f);
                     percent=j/240*100
-             
                 end
                 v = VideoWriter('output.avi');
                 v.FrameRate = 24;  % Default 30
