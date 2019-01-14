@@ -1,60 +1,61 @@
 clear all; clc; close all;
 addpath('Support');
 
-I=5; %Current
-N=2000;% nuber of turns
-L=0.2;%length
-R=0.1;% Radius
+I=3; %Current A
+N=5000;% nuber of turns
+L=0.08;%length m
+R=0.01;% Radius m
 
 mu=1.2566370614e-6;% enviroment permeability
-map_size= 8;%quiverdb plot has to have odd sized map size, 
-twod = 1;
-%if want 2d, toggle twod to 1
+map_size= 0.1;%quiverdb plot has to have odd sized map size.
 %if a even number is entered, it automatically add 1 to it
 %if even, also print the actual size in the command line
-step_size= 1;%map resolution
+twod = 1;
+%if want 2d, toggle twod to 1
+step_size= 0.023;%map resolution;for visualization purpose only; don't use a number that can be divided by map size
 
-Location1=[-5 0 0];
+Location1=[-0.06 0 0];
 Direction1=[1 0 0];
 
-Location2=[5 0 0];
-Direction2=[-1 0 0];
+Location2=[0 0.06 0];
+Direction2=[0 -1 0];
 
 Location3=[1 5 0];
 Direction3=[0 -1 0];
 
 %Create Coils by calling the calss 
 %ElectroMagnet_Class(0:dont use eatimation, Current, Turns, Length, Radius, Location Vector3, Direction Vector3)
-Coil1 = ElectroMagnet_Class(0,I  ,N,L,R*6,Location1,Direction1);
-Coil2 = ElectroMagnet_Class(0,I,N,L,R*6,Location2,Direction2);
+Coil1 = ElectroMagnet_Class(0,I  ,N,L,R,Location1,Direction1);
+Coil2 = ElectroMagnet_Class(0,I/6,N,L,R,Location2,Direction2);
 Coil3 = ElectroMagnet_Class(0,I,N,0.1,R*10,Location3,Direction3);
 
 %combine into a structure
 Coils(1)=Coil1;
 Coils(2)=Coil2;
-Coils(3)=Coil3;
+%Coils(3)=Coil3;
 
 
-mu2=1000*mu;
+mu2=1e3;%1e3 -1e5
+sus=50; %20-70
 
-R_seph=0.01;
-m=0.001;%kg
-Location4=[-2 -3 0];
+R_seph=0.001;
+m=0.0001;%kg
+Location4=[0 0 0];
 Velocity4=[0 0 0];
 
 %ferro_linear_mass(Radius,Permeability,mass,Location vector3, Direction Vector3);
-mass1=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4);
+mass1=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4,sus);
 
 R_seph=0.01;
 m=0.002;%kg
-Location4=[1 2 0];
+Location4=[0 0 0];
 Velocity4=[0 0 0];
 
-mass2=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4);
+%mass2=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4);
  
 %Create 3D field with certain size and [array of Coils] and ONE mass
 %Field3D(map_size,step_size,permeability,[array of Coils],mass object,2d_switch);
-Field1 = Field3D(map_size,step_size,mu,Coils,[mass1 mass2],twod);
+Field1 = Field3D(map_size,step_size,mu,Coils,mass1,twod);
 
 Field1=Field1.combineB();%this is important
 %this step calculate the linearly superimporsed B field
@@ -62,7 +63,7 @@ Field1=Field1.combineB();%this is important
 %an error on mag2dbcoloredquiver of index exceeds dimension.
 
 %Field1.simulate_mass(total time length(s),each time step length(s),movie?);
-[t, state]= Field1.simulate_mass(58,0.1,1);%when closing a animation when not done, output a error with invalid/deleted obj.
+[t, state]= Field1.simulate_mass(300,0.06,1);%when closing a animation when not done, output a error with invalid/deleted obj.
 %when using simulation, if animation does not work corrently, try changing
 %the time step(try both increase and decrease time step)
 % % % % hold on;

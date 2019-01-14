@@ -165,7 +165,7 @@ classdef ElectroMagnet_Class
             end
             
             
-            %             obj.B=zeros(n,n,n,3);
+                          obj.B=zeros(n,n,n,3);
             %             B_unit=zeros(n,n,n,3);
             for i =1:n
                 for j =1:n
@@ -181,6 +181,71 @@ classdef ElectroMagnet_Class
                     end
                 end
             end
+
+        end
+        
+        
+         function obj=Calc_B_2d(obj,field)
+            %Let z axis be the up
+            n=length(field.X);
+            Normal_Vec=zeros(n,n,n,3);
+            Normal_Dist=zeros(n,n,n);
+            Dist_Vec=zeros(n,n,n,3);
+            
+            %             X_vec = field.X-obj.Location(1);
+            %             Y_vec = field.Y-obj.Location(2);
+            %             Z_vec = field.Z-obj.Location(3);
+            for i =1:n
+                for j =1:n
+                    k= (n-1)/2+1;
+                        %optimize the following by not using for loop
+                        Normal_Dist(i,j,k)=dot(...
+                            [field.X(i,j,k)-obj.Location(1)...
+                            field.Y(i,j,k)-obj.Location(2)...
+                            0],obj.Direction);
+                        Normal_Vec(i,j,k,:)=Normal_Dist(i,j,k) * obj.Direction;
+                        
+                        Dist_Vec(i,j,k,:)=[field.X(i,j,k) field.Y(i,j,k) field.Z(i,j,k)] - obj.Location;
+                        
+                    
+                end
+            end
+            Radial_Vec= Dist_Vec-Normal_Vec;
+            Radial_Dist=sqrt(sum(Radial_Vec.^2, 4));
+            Radial_unit=Radial_Vec./Radial_Dist;
+            
+             
+             
+                Brr=obj.N*obj.I*field.mu;
+                for i=1:n
+                    for j=1:n
+                        k= (n-1)/2+1;
+                            BB=FieldSolenoid(obj.R,obj.L,Brr,Radial_Dist(i,j,k),Normal_Dist(i,j,k)); % BB(1:2)=(Brho,Bz)
+                            obj.Br(i,j,k)=BB(1); obj.Bn(i,j,k)=BB(2);
+                    end
+                end% compute accurate intergra
+            
+                         obj.B=zeros(n,n,n,3);
+            %             B_unit=zeros(n,n,n,3);
+            for i =1:n
+                for j =1:n
+                    k= (n-1)/2+1;
+                        if any(isnan(Radial_unit(i,j,k,:)))
+                        Radial_unit(i,j,k,:)=[1 0 0];
+                        end
+                        obj.B(i,j,k,:)  = reshape(Radial_unit(i,j,k,:),[1 3]).* obj.Br(i,j,k)+ obj.Direction.*obj.Bn(i,j,k);
+                        %                         obj.Bmag(i,j,k) = sqrt(sum(obj.B(i,j,k,:).^2));
+                        %                         B_unit(i,j,k,:)=obj.B(i,j,k,:)./obj.Bmag(i,j,k);
+                        %B_unit_Radial(i,j,k,:)=reshape(Radial_unit(i,j,k,:),[1 3])/sqrt(sum(reshape(Radial_unit(i,j,k,:),[1 3]).^2));
+                        %B_unit_Normal(i,j,k,:)=obj.Direction;
+                end
+            end
+
+        end
+        
+    end
+end
+
             %mag2dbcoloredquiver(obj.B,obj,field,strcat('B ',' Location=',num2str(obj.Location),' Direction=',num2str(obj.Direction)));
             %             q=quiver3(field.X,field.Y,field.Z,B_unit(:,:,:,1),B_unit(:,:,:,2),B_unit(:,:,:,3));
             %             %// Create a quiver3 as we normally would (could also be 2D quiver)
@@ -223,7 +288,3 @@ classdef ElectroMagnet_Class
             %             legend(leg1,'Location','best');
             %
             %             return;
-        end
-        
-    end
-end

@@ -6,17 +6,11 @@ B_unit =zeros(n,n,n,3);
 if twod
     for i =1:n
         for j =1:n
-            for k =1:n
-                if (k == n/2)
+            k=(n-1)/2+1
                 Bmag(i,j,k) = sqrt(sum(B_total(i,j,k,:).^2));
                 B_unit(i,j,k,:)=B_total(i,j,k,:)./Bmag(i,j,k);
-                else
-                Bmag(i,j,k) = 0;
-                B_unit(i,j,k,:)=[0 0 0];
-                end
+
                 %B_unit_Radial(i,j,k,:)=reshape(Radial_unit(i,j,k,:),[1 3])/sqrt(sum(reshape(Radial_unit(i,j,k,:),[1 3]).^2));
-                %B_unit_Normal(i,j,k,:)=obj.Direction;
-            end
         end
     end
 else
@@ -76,19 +70,21 @@ set(gcf,'units','points','position',[x0,y0,width,height]);
 title(tile);
 
 cylinders    = zeros(length(Coils));
-translate_tf = zeros(length(Coils));
-rotate_tf    = zeros(length(Coils));
+target_tf    = zeros(length(Coils));
 hold on;
 for i= 1:length(Coils)
 
-[x_cy,y_cy,z_cy]= cylinder(1);
+[x_cy,y_cy,z_cy]= cylinder(Coils(i).R,40);
+z_cy=z_cy-0.5;
 cylinders(i)=surf(x_cy,y_cy,z_cy, 'FaceColor', 'r');
-tranlate_tf(i) = hgtransform('Parent',ax);
-rotate_tf(i)   = hgtransform('Parent',tranlate_tf(i));
-set(cylinders(i),'Parent', rotate_tf(i))
+target_tf(i)   = hgtransform('Parent',ax);
+set(cylinders(i),'Parent', target_tf(i));
 [theta,phi,~] = cart2sph(Coils(i).Direction(1),Coils(i).Direction(2),Coils(i).Direction(3));
-set(tranlate_tf(i), 'Matrix', makehgtform('translate',Coils(i).Location(1),Coils(i).Location(2),Coils(i).Location(3)-Coils(i).L/2));
-set(rotate_tf(i),'Matrix', makehgtform('zrotate',theta,'yrotate',-pi/2+phi,'scale', [Coils(i).R Coils(i).R Coils(i).L]));
+translate_form = makehgtform('translate',Coils(i).Location(1),Coils(i).Location(2),Coils(i).Location(3));%+Coils(i).L/2);
+scale_form = makehgtform('scale', [1 1 Coils(i).L]);
+rotate_form = makehgtform('zrotate',theta,'yrotate',-pi/2+phi);
+set(target_tf(i),'Matrix',translate_form*rotate_form*scale_form );%
+%
 end
 hold off;
 axis equal;

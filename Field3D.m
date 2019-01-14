@@ -18,11 +18,10 @@ classdef Field3D
     end
     methods
         function obj = Field3D(size_map,step_size,mu,Coils,masses,twod)
-            if ~mod(size_map,2)%even do
-                size_map=size_map+1
-            end
             
-            grid = -size_map/2:step_size:size_map/2;
+            grid = 0:step_size:(size_map+0.1)/2;
+            grid = [fliplr(-grid) grid(2:end)];
+            %grid = -size_map/2:step_size:size_map/2;
             obj.n = length(grid);
             [obj.X,obj.Y,obj.Z] = meshgrid(grid);
             obj.size_map = size_map;
@@ -37,8 +36,15 @@ classdef Field3D
         function obj = combineB(obj)
             disp('combineB ran')
             obj.B_total=zeros(obj.n,obj.n,obj.n,3);
+            if obj.twod
+                for i=1:length(obj.Coils)
+                    obj.Coils(i)=obj.Coils(i).Calc_B_2d(obj);
+                end
+
+            else
             for i=1:length(obj.Coils)
                 obj.Coils(i)=obj.Coils(i).Calc_B(obj);
+            end     
             end
             for i=1:length(obj.Coils)
                 obj.B_total(:,:,:,1) = obj.B_total(:,:,:,1)+obj.Coils(i).B(:,:,:,1);%i dir
@@ -72,16 +78,16 @@ classdef Field3D
             xlabel('x coordinate (m)');
             ylabel('y coordinate (m)');
             zlabel('z coordinate (m)');
-            xlim([-obj.size_map/2-1 obj.size_map/2+1])
-            ylim([-obj.size_map/2-1 obj.size_map/2+1])
-            zlim([-obj.size_map/2-1 obj.size_map/2+1])
+            xlim([-obj.size_map/2-obj.size_map/10 obj.size_map/2+obj.size_map/10])
+            ylim([-obj.size_map/2-obj.size_map/10 obj.size_map/2+obj.size_map/10])
+            zlim([-obj.size_map/2-obj.size_map/10 obj.size_map/2+obj.size_map/10])
             state = zeros(length(obj.masses),length(t),6);
             for mass_num = 1:length(obj.masses) 
                 mass=obj.masses(mass_num);
                 initi_state=[mass.Location mass.Velocity];
-                const=2*pi*mass.R^3;%this has problem, missing K, see Jones
-                drag_coeff = 4/3*pi*obj.masses(mass_num).R^3*50;%missing Mr %10kg /s/A/m since submerged in fluid may be higher
-                [t_output, state(mass_num,:,:)]=ode45(@(t,state)sys(obj,t,state,mass.m,const,drag_coeff),t,initi_state,odeset('RelTol',100,'AbsTol',100));
+                %const=2*pi*mass.R^3/3*obj.mu*mass.sus/(1+mass.sus/3);
+                %since eq achieved in nanoseconds, ignore drag and always use ss v (Shipiro) drag_coeff = 4/3*pi*obj.masses(mass_num).R^3*50;%missing Mr %10kg /s/A/m since submerged in fluid may be higher
+                [t_output, state(mass_num,:,:)]=ode45(@(t,state)sys(obj,t,state),t,initi_state);%odeset('RelTol',0.01,'AbsTol',0.01)
                 
             end
             
@@ -89,9 +95,9 @@ classdef Field3D
             if movie
                 f=figure(3);
                 mag2dbcoloredquiver(obj.F_total,obj.Coils,obj,'Motion of Particle (Quiver:F total (Color Scale in dB))',obj.twod);
-                xlim([-obj.size_map/2-1 obj.size_map/2+1]);
-                ylim([-obj.size_map/2-1 obj.size_map/2+1]);
-                zlim([-obj.size_map/2-1 obj.size_map/2+1]);
+                xlim([-obj.size_map/2-obj.size_map/10 obj.size_map/2+obj.size_map/10]);
+                ylim([-obj.size_map/2-obj.size_map/10 obj.size_map/2+obj.size_map/10]);
+                zlim([-obj.size_map/2-obj.size_map/10 obj.size_map/2+obj.size_map/10]);
                 xlabel('x coordinate (m)');
                 ylabel('y coordinate (m)');
                 zlabel('z coordinate (m)');
@@ -106,15 +112,24 @@ classdef Field3D
                     text(loc(1),loc(2),loc(3),['Loc = ' num2str(loc) newline 'Vel = ' num2str(vel) newline 'Mass = ' num2str(obj.masses(mass_num).m) ],'Color','Magenta');
                     vel_text(mass_num) = text (loc(1),loc(2),loc(3),'-');
                     hold on;
-                    coeff=floor(length(t_output)/240);
+                    coeff=length(t_output)/240;
                     h(mass_num) = animatedline('LineWidth',3,'Color','r');
                 end
-                
-                for j = 1:240
-                    for mass_num = 1:length(obj.masses) 
-                        addpoints(h(mass_num),state(mass_num,j*coeff,1),state(mass_num,j*coeff,2),state(mass_num,j*coeff,3));
-                        vel_text(mass_num).String = ['v_x = ' num2str(state(mass_num,j*coeff,4)) newline 'v_y = ' num2str(state(mass_num,j*coeff,5)) newline 'v_z = ' num2str(state(mass_num,j*coeff,6))];
-                        vel_text(mass_num).Position =[state(mass_num,j*coeff,1) state(mass_num,j*coeff,2) state(mass_num,j*coeff,3)]; 
+                if coeff<1
+                    frames = length(t_output);
+                else
+                    frames = 240;
+                end
+                for j = 1:frames
+                    for mass_num = 1:length(obj.masses)     
+                        vector_num = floor(j*coeff);
+                        if vector_num == 0
+                            vector_num = 1;
+                        end
+                        vector_num
+                        addpoints(h(mass_num),state(mass_num,vector_num,1),state(mass_num,vector_num,2),state(mass_num,vector_num,3));
+                        vel_text(mass_num).String = ['v_x = ' num2str(state(mass_num,vector_num,4)) newline 'v_y = ' num2str(state(mass_num,vector_num,5)) newline 'v_z = ' num2str(state(mass_num,vector_num,6))];
+                        vel_text(mass_num).Position =[state(mass_num,vector_num,1) state(mass_num,vector_num,2) state(mass_num,vector_num,3)]; 
                     end
                     drawnow
                     Frames(j) = getframe(f);
@@ -138,28 +153,26 @@ classdef Field3D
         
         function state_dot=sys(obj,t,state,m,const,drag_coeff)
             %This drag doesnt do so well, find another way to use drag
-            F=obj.Coils.Calc_F_single(obj,reshape(state(1:3),[1 3]),0.01);
-            F=const*F;%based on different units may be different, use SI here
+            F=obj.Coils.Calc_F_single(obj,reshape(state(1:3),[1 3]),0.0001);%0.5mm length scale
+            v=4e-13*F;%3.5e-13  -  4.2e-13 m^4/A^2 (Probst)
             %state=[x  y  z x_dot y_dot z_dot]
-            state_dot(1)=state(4);
-            state_dot(2)=state(5);
-            state_dot(3)=state(6);
+            state_dot(1)=v(1);
+            state_dot(2)=v(2);
+            state_dot(3)=v(3);
             
-            force = F(1)-drag_coeff*state(4);
-            %             end
-            state_dot(4)=force/m;
+            
+            state_dot(4)=0;
             %             if abs(drag_coeff*state(5))>1.01*abs(F(2))
             %                 force = -0.01*F(2);
             %             else
-            force = F(2)-drag_coeff*state(5);
-            %             end
-            state_dot(5)=force/m;
+            
+            state_dot(5)=0;
             %             if abs(drag_coeff*state(6))>1.01*abs(F(3))
             %                 force = -0.01*F(3);
             %             else
-            force = F(3)-drag_coeff*state(6);
-            %             end
-            state_dot(6)=force/m;
+%             force = F(3)-drag_coeff*state(6);
+%             %             end
+            state_dot(6)=0;
             
             state_dot=state_dot(:);
             

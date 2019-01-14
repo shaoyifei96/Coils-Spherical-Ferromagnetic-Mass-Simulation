@@ -9,14 +9,16 @@ classdef ferro_linear_mass
         m  
         Location
         Velocity
+        sus
     end
     methods
-        function obj = ferro_linear_mass(R,mu,m,Location, Velocity)
+        function obj = ferro_linear_mass(R,mu,m,Location, Velocity,sus)
             obj.R=R;
             obj.m=m;
             obj.mu = mu;
             obj.Location=Location;
             obj.Velocity=Velocity;
+            obj.sus = sus; %suseptibility
             %K=(mu-Field.mu)/(mu+2*Field.mu);
         end
         
