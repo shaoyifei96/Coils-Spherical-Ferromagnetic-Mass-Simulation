@@ -41,7 +41,7 @@ sus=50; %20-70
 
 R_seph=0.001;
 m=0.0001;%kg
-Location4=[0.102 0 0];
+Location4=[0.102 -0.01 0];
 Velocity4=[0 0 0];
 
 %ferro_linear_mass(Radius,Permeability,mass,Location vector3, Direction Vector3);
@@ -49,7 +49,7 @@ mass1=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4,sus);
 
 R_seph=0.01;
 m=0.002;%kg
-Location4=[-0.1 0 0];
+Location4=[-0.1 -0.01 0];
 Velocity4=[0 0 0];
 
 mass2=ferro_linear_mass(R_seph,mu2,m,Location4, Velocity4,sus);
@@ -69,7 +69,7 @@ Field1=Field1.combineB();%this is important
 %an error on mag2dbcoloredquiver of index exceeds dimension.
 
 %Field1.simulate_mass(total time length(s),each time step length(s),movie?);
-[t, state]= Field1.simulate_mass(100,0.01,1);%when closing a animation when not done, output a error with invalid/deleted obj.
+[t, state]= Field1.simulate_mass(50,0.01,1);%when closing a animation when not done, output a error with invalid/deleted obj.
 %when using simulation, if animation does not work corrently, try changing
 %the time step(try both increase and decrease time step)
 % % % % hold on;

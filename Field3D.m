@@ -152,7 +152,6 @@ classdef Field3D
         
         
         function state_dot=sys(obj,t,state,m,const,drag_coeff)
-            %This drag doesnt do so well, find another way to use drag
             F=obj.Coils.Calc_F_single(obj,reshape(state(1:3),[1 3]),0.0001);%0.5mm length scale
             v=4e-13*F;%3.5e-13  -  4.2e-13 m^4/A^2 (Probst)
             %state=[x  y  z x_dot y_dot z_dot]
