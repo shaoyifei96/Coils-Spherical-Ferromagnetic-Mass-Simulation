@@ -36,7 +36,7 @@ Bmag(isnan(Bmag))=1e-10;
 Bmag=(mag2db(Bmag));
 mags = reshape(Bmag,[n.^3 1]);
 %// Get the current colormap
-currentColormap = colormap(winter);
+currentColormap = colormap(hsv);
 
 %// Now determine the color to make each arrow using a colormap
 [~, ~, ind] = histcounts(mags, size(currentColormap, 1));

@@ -1,10 +1,10 @@
 clear all; clc; close all;
 addpath('Support');
 
-I=10000; %Current A
+I=100; %Current A
 N=8000;% nuber of turns
-L=0.04;%length m
-R=0.01;% Radius m
+L=0.29;%length m
+R=0.0095/2;% Radius m
 
 mu=1.2566370614e-6;% enviroment permeability
 map_size= 0.3;%quiverdb plot has to have odd sized map size.
@@ -13,12 +13,12 @@ map_size= 0.3;%quiverdb plot has to have odd sized map size.
 twod = 1;
 %if want 2d, toggle twod to 1
 step_size= 0.013;%map resolution;for visualization purpose only; don't use a number that can be divided by map size
-angle = deg2rad(20);
+angle = deg2rad(10);
 
-Location1=[-0.03 0.015 0];
+Location1=[-0.03 -0.05 0];
 Direction1=[cos(angle) -sin(angle) 0];
 
-Location2=[-0.03 -0.015 0];
+Location2=[-0.03 0.05 0];
 Direction2=[-cos(angle) -sin(angle) 0];
 
 Location3=[1 5 0];
@@ -67,6 +67,12 @@ Field1=Field1.combineB();%this is important
 %this step calculate the linearly superimporsed B field
 %if don't do this, there is no B field anywhere, you would encounter
 %an error on mag2dbcoloredquiver of index exceeds dimension.
+figure(4)
+surf(-Field1.Hmagsquared(:,:,(Field1.n-1)/2+1))
+%xlim([0 10])
+%ylim([15 18])
+zlim([-2e6 0])
+
 
 %Field1.simulate_mass(total time length(s),each time step length(s),movie?);
 [t, state]= Field1.simulate_mass(100,0.01,1);%when closing a animation when not done, output a error with invalid/deleted obj.

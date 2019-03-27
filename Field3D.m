@@ -13,6 +13,7 @@ classdef Field3D
         
         B_total
         F_total
+        Hmagsquared
         
         twod
     end
@@ -51,8 +52,9 @@ classdef Field3D
                 obj.B_total(:,:,:,2) = obj.B_total(:,:,:,2)+obj.Coils(i).B(:,:,:,2);%j dir
                 obj.B_total(:,:,:,3) = obj.B_total(:,:,:,3)+obj.Coils(i).B(:,:,:,3);%k dir
             end
-            Hmagsquared = sum(obj.B_total.^2,4)/(obj.mu^2);%force on mu of enviroment
-            [Fx,Fy,Fz] = gradient(Hmagsquared,obj.step_size,obj.step_size,obj.step_size);
+            obj.Hmagsquared = sum(obj.B_total.^2,4)/(obj.mu^2);%force on mu of enviroment
+            
+            [Fx,Fy,Fz] = gradient(obj.Hmagsquared,obj.step_size,obj.step_size,obj.step_size);
             obj.F_total = cat(4,Fx,Fy,Fz);
             
         end
@@ -87,7 +89,7 @@ classdef Field3D
                 initi_state=[mass.Location mass.Velocity];
                 %const=2*pi*mass.R^3/3*obj.mu*mass.sus/(1+mass.sus/3);
                 %since eq achieved in nanoseconds, ignore drag and always use ss v (Shipiro) drag_coeff = 4/3*pi*obj.masses(mass_num).R^3*50;%missing Mr %10kg /s/A/m since submerged in fluid may be higher
-                [t_output, state(mass_num,:,:)]=ode45(@(t,state)sys(obj,t,state),t,initi_state);%odeset('RelTol',0.01,'AbsTol',0.01)
+                [t_output, state(mass_num,:,:)]=ode45(@(t,state)sys(obj,t,state),t,initi_state);odeset('RelTol',1000,'AbsTol',1000)
                 
             end
             
@@ -126,7 +128,7 @@ classdef Field3D
                         if vector_num == 0
                             vector_num = 1;
                         end
-                        vector_num
+                        %vector_num
                         addpoints(h(mass_num),state(mass_num,vector_num,1),state(mass_num,vector_num,2),state(mass_num,vector_num,3));
                         vel_text(mass_num).String = ['v_x = ' num2str(state(mass_num,vector_num,4)) newline 'v_y = ' num2str(state(mass_num,vector_num,5)) newline 'v_z = ' num2str(state(mass_num,vector_num,6))];
                         vel_text(mass_num).Position =[state(mass_num,vector_num,1) state(mass_num,vector_num,2) state(mass_num,vector_num,3)]; 
